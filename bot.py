@@ -1,73 +1,131 @@
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command, CommandStart
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils import executor
-import asyncio, logging
+from aiogram import Bot, Dispatcher, Router, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram import F
+import asyncio
 import random
-from config import token
 
+token = '7584494676:AAGMDXYFipxLpOflTCCKjAmu7n1GrPXahZA'
 
-logging.basicConfig(level=logging.INFO)
 bot = Bot(token=token)
-dp = Dispatcher(Bot)
+dp = Dispatcher()
 
-start_menu = ReplyKeyboardMarkup(resize_keyboard=True)
-start_menu.add = (KeyboardButton("Игра"), KeyboardButton ("Наши новости"))
+router = Router()
+dp.include_router(router)
 
-game_menu = ReplyKeyboardMarkup(resize_keyboard=True)
-game_menu.add = (KeyboardButton("Камень, Ножницы, Бумага"), KeyboardButton("Рандомайзер"))
+def get_start_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Игра", callback_data="game")
+    builder.button(text="Наши новости", callback_data="news")
+    return builder.as_markup()
 
-knb_menu = ReplyKeyboardMarkup(resize_keyboard=True)
-knb_menu.add = (KeyboardButton("Камень"), KeyboardButton("Ножница"), KeyboardButton("Бумага"))
+def get_game_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Камень, ножницы, бумага", callback_data="knb")
+    builder.button(text="Рандомайзер", callback_data="randomizer")
+    return builder.as_markup()
 
-news_menu = ReplyKeyboardMarkup(resize_keyboard=True)
-news_menu.add = (KeyboardButton("О нас"), KeyboardButton("Адрес"), KeyboardButton("Наши курсы"))
+def get_knb_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Камень", callback_data="rock")
+    builder.button(text="Ножницы", callback_data="scissors")
+    builder.button(text="Бумага", callback_data="paper")
+    return builder.as_markup()
 
+def get_news_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="О нас", callback_data="about")
+    builder.button(text="Адрес", callback_data="address")
+    builder.button(text="Наши курсы", callback_data="courses")
+    return builder.as_markup()
 
-selection = ['Камень', 'Ножница', 'Бумага']
+@router.message(Command("start"))
+async def cmd_start(message: types.Message):
+    await message.answer(
+        "Привет! Я твой бот. Выбери действие:",
+        reply_markup=get_start_keyboard()
+    )
 
-user_choice = message.text
-bot_choice = random.choice(selection)
+@router.callback_query(F.data == "game")
+async def game_menu(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Выберите игру:",
+        reply_markup=get_game_keyboard()
+    )
 
-@dp.message(Command("start"))
-async def start(message:types.Message):
-    await message.answer("Добро пожаловать! Выберите одну из опций:", reply_markup=start_menu)
+@router.callback_query(F.data == "news")
+async def news_menu(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Выберите информацию:",
+        reply_markup=get_news_keyboard()
+    )
 
+@router.callback_query(F.data == "rps")
+async def rps_menu(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Выберите камень, ножницы или бумагу:",
+        reply_markup=get_knb_keyboard()
+    )
 
-@dp.message(lambda message: message.text == "Игра")
-async def start_game(message: types.Message):
-    await message.answer("Выберите игру:", reply_markup=game_menu)
+@router.callback_query(F.data.in_({"rock", "scissors", "paper"}))
+async def play_knb(callback: types.CallbackQuery):
+    bot_choice = random.choice(["Камень", "Ножницы", "Бумага"])
+    user_choice_map = {
+        "rock": "Камень",
+        "scissors": "Ножницы",
+        "paper": "Бумага"
+    }
+    user_choice = user_choice_map[callback.data]
 
-
-dp.message(lambda message: message.text == "Наши новости")
-async def news(message: types.Message):
-    await message.answer("Выберите раздел новостей:", reply_markup=news_menu)
-
-
-@dp.message(lambda message: message.text == "Камен, ножницы, бумага")
-async def rock_paper_scissors(message: types.Message):
-    await message.answer("Выберите камень, ножницы или бумагу:", reply_markup=knb_menu)
-
-
-@dp.message(lambda message: message.text == "Рандомайзер")
-async def randomizer(message: types.Message):
-    result = random.choice(["Вы победили!", "Вы проиграли!", "Ничья"])
-    await message.answer(result)
-
-
-@dp.message(lambda message: message.text in selection)
-async def play_knb(message: types.Message):
-    user_choice = message.text
-    bot_choice = random.choice(selection)
-
-if user_choice == bot_choice:
-        result = "Ничья!"
-elif (user_choice == "Камень" and bot_choice == "Ножницы") or \
+    if user_choice == bot_choice:
+        result = "Ничья"
+    elif (user_choice == "Камень" and bot_choice == "Ножницы") or \
          (user_choice == "Ножницы" and bot_choice == "Бумага") or \
          (user_choice == "Бумага" and bot_choice == "Камень"):
         result = "Вы победили!"
-else:
+    else:
         result = "Вы проиграли!"
 
-await message.answer(f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result}")
+    await callback.message.edit_text(
+        f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result}",
+        reply_markup=get_knb_keyboard()
+    )
+
+@router.callback_query(F.data == "randomizer")
+async def randomizer(callback: types.CallbackQuery):
+    result = random.choice(["Вы победили!", "Вы проиграли!", "Ничья"])
+    await callback.message.edit_text(
+        result,
+        reply_markup=get_game_keyboard()
+    )
+
+@router.callback_query(F.data == "about")
+async def about_us(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Международная IT-академия Geeks (Гикс) была основана Fullstack-разработчиком Айдаром Бакировым и Android-разработчиком Нургазы Сулаймановым в 2018 году",
+        reply_markup=get_news_keyboard()
+    )
+
+
+@router.callback_query(F.data == "address")
+async def address(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Наш адрес: ул. Мырзалы Аматова 1Б, БЦ Томирис, цокольный этаж (здание Визион)",
+        reply_markup=get_news_keyboard()
+    )
+
+@router.callback_query(F.data == "courses")
+async def courses(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Backend-разработчик, Frontend-разработчик, UX/UI-дизайнер /n Обучение в месяц 10.000сом",
+        reply_markup=get_news_keyboard()
+    )
+
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
+
