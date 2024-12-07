@@ -49,24 +49,27 @@ async def cmd_start(message: types.Message):
 
 @router.callback_query(F.data == "game")
 async def game_menu(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Выберите игру:",
-        reply_markup=get_game_keyboard()
-    )
+    if callback.message.text != "Выберите игру:" or callback.message.reply_markup != get_game_keyboard():
+        await callback.message.edit_text(
+            "Выберите игру:",
+            reply_markup=get_game_keyboard()
+        )
 
 @router.callback_query(F.data == "news")
 async def news_menu(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Выберите информацию:",
-        reply_markup=get_news_keyboard()
-    )
+    if callback.message.text != "Выберите информацию:" or callback.message.reply_markup != get_news_keyboard():
+        await callback.message.edit_text(
+            "Выберите информацию:",
+            reply_markup=get_news_keyboard()
+        )
 
-@router.callback_query(F.data == "rps")
+@router.callback_query(F.data == "knb")
 async def rps_menu(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Выберите камень, ножницы или бумагу:",
-        reply_markup=get_knb_keyboard()
-    )
+    if callback.message.text != "Выберите камень, ножницы или бумагу:" or callback.message.reply_markup != get_knb_keyboard():
+        await callback.message.edit_text(
+            "Выберите камень, ножницы или бумагу:",
+            reply_markup=get_knb_keyboard()
+        )
 
 @router.callback_query(F.data.in_({"rock", "scissors", "paper"}))
 async def play_knb(callback: types.CallbackQuery):
@@ -87,45 +90,48 @@ async def play_knb(callback: types.CallbackQuery):
     else:
         result = "Вы проиграли!"
 
-    await callback.message.edit_text(
-        f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result}",
-        reply_markup=get_knb_keyboard()
-    )
+    if callback.message.text != f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result}" or callback.message.reply_markup != get_knb_keyboard():
+        await callback.message.edit_text(
+            f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result}",
+            reply_markup=get_knb_keyboard()
+        )
 
 @router.callback_query(F.data == "randomizer")
 async def randomizer(callback: types.CallbackQuery):
     result = random.choice(["Вы победили!", "Вы проиграли!", "Ничья"])
-    await callback.message.edit_text(
-        result,
-        reply_markup=get_game_keyboard()
-    )
+
+    if callback.message.text != result or callback.message.reply_markup != get_game_keyboard():
+        await callback.message.edit_text(
+            result,
+            reply_markup=get_game_keyboard()
+        )
 
 @router.callback_query(F.data == "about")
 async def about_us(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Международная IT-академия Geeks (Гикс) была основана Fullstack-разработчиком Айдаром Бакировым и Android-разработчиком Нургазы Сулаймановым в 2018 году",
-        reply_markup=get_news_keyboard()
-    )
-
+    if callback.message.text != "Международная IT-академия Geeks (Гикс) была основана Fullstack-разработчиком Айдаром Бакировым и Android-разработчиком Нургазы Сулаймановым в 2018 году" or callback.message.reply_markup != get_news_keyboard():
+        await callback.message.edit_text(
+            "Международная IT-академия Geeks (Гикс) была основана Fullstack-разработчиком Айдаром Бакировым и Android-разработчиком Нургазы Сулаймановым в 2018 году",
+            reply_markup=get_news_keyboard()
+        )
 
 @router.callback_query(F.data == "address")
 async def address(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Наш адрес: ул. Мырзалы Аматова 1Б, БЦ Томирис, цокольный этаж (здание Визион)",
-        reply_markup=get_news_keyboard()
-    )
+    if callback.message.text != "Наш адрес: ул. Мырзалы Аматова 1Б, БЦ Томирис, цокольный этаж (здание Визион)" or callback.message.reply_markup != get_news_keyboard():
+        await callback.message.edit_text(
+            "Наш адрес: ул. Мырзалы Аматова 1Б, БЦ Томирис, цокольный этаж (здание Визион)",
+            reply_markup=get_news_keyboard()
+        )
 
 @router.callback_query(F.data == "courses")
 async def courses(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Backend-разработчик, Frontend-разработчик, UX/UI-дизайнер /n Обучение в месяц 10.000сом",
-        reply_markup=get_news_keyboard()
-    )
+    if callback.message.text != "Backend-разработчик, Frontend-разработчик, UX/UI-дизайнер. Обучение в месяц 10.000сом" or callback.message.reply_markup != get_news_keyboard():
+        await callback.message.edit_text(
+            "Backend-разработчик, Frontend-разработчик, UX/UI-дизайнер. Обучение в месяц 10.000сом",
+            reply_markup=get_news_keyboard()
+        )
 
 async def main():
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-
